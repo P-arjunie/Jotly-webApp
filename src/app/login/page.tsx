@@ -1,26 +1,25 @@
-
 'use client';
 
 import Image from "next/image";
 import logo from "../../../public/logo.png"
 import { useState } from "react";
 
-interface RegistrationProps {
-    navigate: (path: string) => void;
+interface LoginProps {
+  setIsAuthenticated: (isAuthenticated: boolean) => void;
+  navigate: (path: string) => void;
 }
 
-export default function Registration({ navigate }: RegistrationProps) {
-    const [email, setEmail] = useState<string>("");
-    const [password, setPassword] = useState<string>("");
-    const [name, setName] = useState<string>("");
-    const [loading, setLoading] = useState<boolean>(false);
-    const [error, setError] = useState<string>("");
+export default function Login({ setIsAuthenticated, navigate }: LoginProps) {
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
 
-    const handleRegister = async (): Promise<void> => {
+    const handleLogin = async () => {
         setLoading(true);
         setError("");
 
-        if(!email || !password || !name){
+        if(!email || !password){
             setError("Please fill in all fields");
             alert("Please fill in all fields");
             setLoading(false);
@@ -28,22 +27,25 @@ export default function Registration({ navigate }: RegistrationProps) {
         }
         
         try {
-            const response = await fetch('/api/auth/register', {
+            const response = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email, password, name }),
+                body: JSON.stringify({ email, password }),
             });
             
             const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || 'Registration failed');
-            }
             
-            // Redirect to login page after successful registration
-            navigate('/login');
+            if (!response.ok) {
+                throw new Error(data.error || 'Login failed');
+            }
+
+            localStorage.setItem('token', data.token);
+            // Update authentication state
+            setIsAuthenticated(true);
+            // Redirect to dashboard after successful login
+            navigate('/dashboard');
         } catch (err) {
             if (err instanceof Error) {
                 setError(err.message);
@@ -63,24 +65,15 @@ export default function Registration({ navigate }: RegistrationProps) {
             />
 
             <h1 className="text-4xl text-blue-900 font-bold mb-8">
-                Create Account
+                Login
             </h1>
             <div className="w-96">
-                <div className="mb-4 w-full">
-                    <input
-                    type="name"
-                    placeholder="Name"
-                    value={name}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-600 rounded-lg focus:outline-none text-blue-900"
-                    />
-                </div>
                 <div className="mb-4">
                     <input
                     type="email"
                     placeholder="Email"
                     value={email}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="w-full px-4 py-3 border border-gray-600 rounded-lg focus:outline-none text-blue-900"
                     />
                 </div>
@@ -89,23 +82,23 @@ export default function Registration({ navigate }: RegistrationProps) {
                     type="password"
                     placeholder="Password"
                     value={password}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                    onChange={(e) => setPassword(e.target.value)}
                     className="w-full px-4 py-3 border border-gray-600 rounded-lg focus:outline-none text-blue-900"
                     />
                 </div>
 
                 <button
-                    onClick={handleRegister}
+                    onClick={handleLogin}
                     disabled={loading}
                     className="w-full py-3 bg-pink-300 text-blue-800 font-semibold rounded-lg hover:bg-pink-400"
                 >
-                    {loading ? 'Registering...' : 'Register'}
+                    {loading ? 'Logging in...' : 'Login'}
                 </button>
             </div>
 
             <div className="text-center mt-6">
-                <a onClick={() => navigate('/login')} className="text-blue-800 hover:underline cursor-pointer">
-                    Already have an account? Login
+                <a onClick={() => navigate('/register')} className="text-blue-800 hover:underline cursor-pointer">
+                    Don't have an account? Register
                 </a>
             </div>
 
